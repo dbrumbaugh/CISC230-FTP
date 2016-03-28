@@ -9,7 +9,10 @@ def establish_connection() :
     try:
       ip_address = raw_input("Please enter the IP address of the FTP server to which to connect: ")
       port = raw_input("Please enter the port number on which to connect: ")
-      connection.connect((ip_address, port))
+
+      #connection.connect((ip_address, port))
+      #test code
+      connection.connect((socket.gethostname(),21))
       print("[I] Connection to " + ip_address + "successfully established.")
       break
     except:
@@ -20,7 +23,7 @@ def establish_connection() :
 def authenticate(connection):
   while True:
     name = raw_input("Please enter username: ")
-    passwd = raw_nput("Please enter password: ")
+    passwd = raw_input("Please enter password: ")
 
     connection.send(name)
     connection.send(passwd)
@@ -31,6 +34,7 @@ def authenticate(connection):
       print("[I] Authentication successful")
       break
     else:
+      print("[E] Credentials rejected by server. Please try again.")
       continue
 
 def main() :
