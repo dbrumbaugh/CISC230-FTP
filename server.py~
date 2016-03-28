@@ -17,17 +17,10 @@ def main()
     session, ip_address = host_socket.accept()
     print("[I] Connection recieved from " + ip_address)
 
-    while True:
-      username = session.recv(1024)
-      password = session.recv(1024)
+    username = session.recv(1024)
+    password = session.recv(1024)
 
-      valid = validate_credentials(username, password)
-      if (valid):
-	session.send("Y")
-	break
-      else:
-	session.send("N")
-	continue
+    validate_credentials(username, password)
 
 
 
