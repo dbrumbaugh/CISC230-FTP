@@ -54,6 +54,10 @@ def get_and_process_function(session, working_dir):
     stat = -1
     return stat, working_dir
 
+def exit(session):
+  session.close()
+  print("[I] Session Terminated at client's request.")
+  return 1
 
 def dirl(session, working_dir):
   try:
@@ -89,13 +93,11 @@ def cd(session, arg, working_dir):
       print("[D]: " + str(dir_lst))
 
       for i in range(length - 1):
-	print("[D]: " + str(i) + str(dir_lst[i]))
-
 	if(i == length - 1):
 	  working_dir = working_dir + str(dir_lst[i])
 	else:
           working_dir = working_dir + str(dir_lst[i]) + "\\"
-        print(working_dir)
+	print("[I] New directory is: " + working_dir)
 
       if (os.path.isdir(working_dir)):
 	if (len(working_dir) < len(root_dir)):

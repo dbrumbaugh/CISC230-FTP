@@ -47,13 +47,17 @@ def get_and_process_function(session, working_dir):
     stat = put(session)
     return stat, working_dir
   elif (func == "exit"):
-    stat = ext(session)
+    stat = exit(session)
     return stat, working_dir
   else:
     print("[E] Invalid function request recieved.")
     stat = -1
     return stat, working_dir
 
+def exit(session):
+  session.close()
+  print("[I] Session Terminated at client's request.")
+  return 1
 
 def dirl(session, working_dir):
   try:

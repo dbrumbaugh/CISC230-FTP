@@ -52,11 +52,11 @@ def get_function(connection):
     cd(connection, args[1])
     return 0
 
-  elif(func == "get", args[1]):
+  elif(func == "get"):
     get(connection, args[1])
     return 0
 
-  elif(func == "put", args[1]):
+  elif(func == "put"):
     put(connection, args[1])
     return 0
 
@@ -65,16 +65,25 @@ def get_function(connection):
     return 0
 
   elif (func == "exit"):
+    exit(connection)
     return -1
 
   else:
     print("Invalid function or function syntax")
     print_help()
 
+def exit(connection):
+  connection.send("exit")
+
 def print_help():
   #print help dialogue
-  print("function not yet implemented")
-
+  print("Supported operations are:")
+  print("Change Directory: cd <target directory>")
+  print("List Directory contents: dir")
+  print("Get file from server: get <filename>")
+  print("Put file to server: put <filename>")
+  print("End session: exit")
+  print("Show this message: ?")
 def dirl(connection):
   #list directory contents on server
   connection.send("dir")
@@ -114,9 +123,9 @@ def main() :
   connection = establish_connection()
   authenticate(connection)
 
-  cont = 0
-  while(cont == 0):
-    cont = get_function(connection)
+  stat = 0
+  while(stat == 0):
+    stat = get_function(connection)
 
 
 
