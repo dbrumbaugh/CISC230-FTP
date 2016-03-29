@@ -1,5 +1,4 @@
 import socket
-import time
 
 #Python client file for CISC230 Project
 
@@ -90,7 +89,6 @@ def get_function(connection):
   except:
     exit(connection)
     print("[E] An exceptional condition has occured in the FTP client which is irrecoverable. The session has been terminated. Please restart the client and reconnect to the server.")
-    sleep(2)
 
     return -1
 
