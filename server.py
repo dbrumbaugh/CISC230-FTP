@@ -4,7 +4,7 @@ import sys
 
 #high-level config options:
 
-root_dir = os.getcwd()
+root_dir = os.getcwd() + "\\server-root"
 port     = 21
 host_add = socket.gethostname()
 password_file = os.getcwd() + "\\shadow"

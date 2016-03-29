@@ -43,23 +43,35 @@ def get_function(connection):
   try:
     inp = raw_input("Please enter a function to perform [? for help]: ")
 
-    args = inp.split(" ", 1)
+    args = inp.split(" ")
     func = args[0]
+
+    if len(args) >= 2:
+      arg1 = args[1]
+    else:
+      arg1 = ""
+
+    if len(args) >=3:
+      arg2 = args[2]
+    else:
+      arg2 = ""
+
+
 
     if(func == "dir"):
       dirl(connection)
       return 0
 
     elif(func == "cd"):
-      cd(connection, args[1])
+      cd(connection, arg1)
       return 0
 
     elif(func == "get"):
-      get(connection, args[1])
+      get(connection, arg1, arg2)
       return 0
 
     elif(func == "put"):
-      put(connection, args[1])
+      put(connection, arg1, arg2)
       return 0
 
     elif (func == "?"):
@@ -88,12 +100,13 @@ def exit(connection):
 def print_help():
   #print help dialogue
   print("Supported operations are:")
-  print("Change Directory: cd <target directory>")
-  print("List Directory contents: dir")
-  print("Get file from server: get <filename>")
-  print("Put file to server: put <filename>")
-  print("End session: exit")
-  print("Show this message: ?")
+  print("Change Directory:\tcd <target directory>")
+  print("List Directory contents:\tdir")
+  print("Get file from server: \tget <source filename> <target filename>")
+  print("Put file to server: \tput <source filename> <target filename>")
+  print("End session: \t\texit")
+  print("Show this message: \t?")
+
 def dirl(connection):
   #list directory contents on server
   connection.send("dir")
@@ -109,22 +122,77 @@ def dirl(connection):
 
 def cd(connection, arg):
   print("[I] Function: CD, ARGS: " + str(arg))
+  if arg == "":
+    print("[E] No argument provided to CD function.")
+    return
+    
   connection.send("cd " + str(arg))
-  stat = str(connection.recv(1))
+  sstat = str(connection.recv(1))
 
-  if (stat == "Y"):
+  if (sstat == "Y"):
     print("[I] CD Command executed successfully")
-  elif (stat == "A"):
+  elif (sstat == "A"):
     print("[A] Access violation on CD command. Access to requested directory is restricted.")
   else:
     print("[E] Exceptional condition in CD command. Ensure that desired directory exists and is properly spelled")
 
-def get():
-  #recieve specified file from server
+def get(connection, arg1, arg2):
+  #receive specified file from server
+
+  if arg2 == "":
+    arg2 = arg1
+
+  try:
+    f = open(arg2, "wb")
+    connection.send("get " + str(arg1))
+    sstat = connection.recv(1)
+
+    if sstat == "Y":
+      #all is good, begin recieving file
+      print("[I] Get request accepted by server")
+
+    elif sstat == "E":
+      print("[E] Requested filename does not exist on server in current working directory")
+
+    else:
+      print("[E] Get request rejected by server.")
+
+    f.close()
+
+
+  except:
+    print("[E] Cannot open local file: " + arg2)
+
   print("function not yet implemented")
 
-def put():
+def put(connection, arg1, arg2):
   #send specified file to server
+
+  if arg2 == "":
+    arg2 = arg1
+  
+  try:
+    f = open(arg2, "rb")
+    connection.send("put " + str(arg1))
+
+    sstat = connection.recv(1)
+
+    if sstat == "Y":
+      #all is good, begin sending file
+      print("[I] Put request accepted by server.")
+
+    elif sstat == "E":
+      print("[E] Requested filename does not exist on server in current working directory")
+
+    else:
+      print("[E] Put request rejected by server.")
+
+    f.close()
+
+
+  except:
+    print("[E] Cannot open local file: " + arg2)
+
   print("function not yet implemented")
 
 
