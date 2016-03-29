@@ -1,4 +1,5 @@
 import socket
+import time
 
 #Python client file for CISC230 Project
 
@@ -39,38 +40,47 @@ def authenticate(connection):
       continue
 
 def get_function(connection):
-  inp = raw_input("Please enter a function to perform [? for help]: ")
+  try:
+    inp = raw_input("Please enter a function to perform [? for help]: ")
 
-  args = inp.split(" ", 1)
-  func = args[0]
+    args = inp.split(" ", 1)
+    func = args[0]
 
-  if(func == "dir"):
-    dirl(connection)
-    return 0
+    if(func == "dir"):
+      dirl(connection)
+      return 0
 
-  elif(func == "cd"):
-    cd(connection, args[1])
-    return 0
+    elif(func == "cd"):
+      cd(connection, args[1])
+      return 0
 
-  elif(func == "get"):
-    get(connection, args[1])
-    return 0
+    elif(func == "get"):
+      get(connection, args[1])
+      return 0
 
-  elif(func == "put"):
-    put(connection, args[1])
-    return 0
+    elif(func == "put"):
+      put(connection, args[1])
+      return 0
 
-  elif (func == "?"):
-    print_help()
-    return 0
+    elif (func == "?"):
+      print_help()
+      return 0
 
-  elif (func == "exit"):
+    elif (func == "exit"):
+      exit(connection)
+      return -1
+
+    else:
+      print("Invalid function or function syntax")
+      print_help()
+      return 0
+
+  except:
     exit(connection)
-    return -1
+    print("[E] An exceptional condition has occured in the FTP client which is irrecoverable. The session has been terminated. Please restart the client and reconnect to the server.")
+    sleep(2)
 
-  else:
-    print("Invalid function or function syntax")
-    print_help()
+    return -1
 
 def exit(connection):
   connection.send("exit")
@@ -120,6 +130,7 @@ def put():
 
 def main() :
 
+  
   connection = establish_connection()
   authenticate(connection)
 
@@ -127,6 +138,7 @@ def main() :
   while(stat == 0):
     stat = get_function(connection)
 
+      
 
 
 

@@ -7,6 +7,8 @@ import sys
 root_dir = os.getcwd()
 port     = 21
 host_add = socket.gethostname()
+password_file = os.getcwd() + "\\shadow"
+key_file      = os.getcwd() + "\\key"
 
 #Python server file for CISC230 Project
 #Barebones version--I'll update for multithreading support once I get home tonight
@@ -47,7 +49,7 @@ def get_and_process_function(session, working_dir):
     stat = put(session)
     return stat, working_dir
   elif (func == "exit"):
-    stat = ext(session)
+    stat = exit(session)
     return stat, working_dir
   else:
     print("[E] Invalid function request recieved.")

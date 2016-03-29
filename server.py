@@ -7,6 +7,8 @@ import sys
 root_dir = os.getcwd()
 port     = 21
 host_add = socket.gethostname()
+password_file = os.getcwd() + "\\shadow"
+key_file      = os.getcwd() + "\\key"
 
 #Python server file for CISC230 Project
 #Barebones version--I'll update for multithreading support once I get home tonight
