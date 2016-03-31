@@ -46,7 +46,7 @@ def get_and_process_function(session, working_dir):
     stat = get(session)
     return stat, working_dir
   elif (func == "put"):
-    stat = put(session)
+    stat = put(session, arg, working_dir)
     return stat, working_dir
   elif (func == "exit"):
     stat = exit(session)
@@ -125,6 +125,39 @@ def cd(session, arg, working_dir):
   except:
     session.send("N")
     return -1, backup
+
+def put(session, arg, working_dir):
+    try:
+      f = open(working_dir + "\\" + arg, "wb")
+      print("[I] File at " + working_dir + "\\" + arg +" opened.")
+      session.send('Y')
+    except:
+      print("[E] Unable to open file " + working_dir + "\\" + art)
+      session.send("N")
+      return 0
+
+    length = str(session.recv(1024)).strip()
+    data_length = 0
+
+    try:
+      data_length = int(float(length))
+      print("[I] Incoming file of length: " + str(data_length) +" kb")
+      session.send("Y")
+    except:
+      e = sys.exc_info()
+      print(str(e))
+      print("[E] Invalid file length recieved: " + str(length))
+      session.send("N")
+
+    for i in range(int(data_length)):
+      data_segment = session.recv(1024)
+      print("[I] Recieved segment: " + str(i))
+      print("[I]" + str(data_segment))
+      f.write(data_segment)
+      print("[I] Writing segment" + str(i) +" to file")
+
+    f.close()
+    return 0
  
 
 def main():

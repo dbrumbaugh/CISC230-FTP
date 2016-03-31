@@ -1,4 +1,7 @@
 import socket
+import math
+import os
+import sys
 
 #Python client file for CISC230 Project
 
@@ -168,31 +171,52 @@ def put(connection, arg1, arg2):
 
   if arg2 == "":
     arg2 = arg1
-  
+
   try:
-    f = open(arg2, "rb")
-    connection.send("put " + str(arg1))
-
-    sstat = connection.recv(1)
-
-    if sstat == "Y":
-      #all is good, begin sending file
-      print("[I] Put request accepted by server.")
-
-    elif sstat == "E":
-      print("[E] Requested filename does not exist on server in current working directory")
-
-    else:
-      print("[E] Put request rejected by server.")
-
-    f.close()
-
+    f = open(arg1, "rb")
 
   except:
-    print("[E] Cannot open local file: " + arg2)
+    print("[E] Cannot open local file: " + arg1)
+    return 0
 
-  print("function not yet implemented")
+  connection.send("put " + str(arg2))
 
+  sstat = connection.recv(1)
+
+  if sstat == "Y":
+    #all is good, begin sending file
+    print("[I] Put request accepted by server.")
+    length = 0
+
+    try:
+      length = math.ceil(float(os.path.getsize(arg1))/1024)
+      print("[I] File of length: " + str(length) + " kb")
+      connection.send(str(length))
+    except:
+      e = sys.exc_info()[0]
+      print(str(e))
+   
+    sstat = connection.recv(1)
+
+    if(sstat == 'Y'):
+      print("[I] File length accepted by server.")
+    else:
+      print("[E] File length rejected by server.")
+      return 0
+      
+    data_segment = f.read(1024)
+    while data_segment:
+       connection.send(data_segment)
+       data_segment = f.read(1024)
+       print("[I]" + str(data_segment))
+
+  elif sstat == "E":
+    print("[E] Requested filename does not exist on server in current working directory")
+
+  else:
+    print("[E] Put request rejected by server.")
+
+  f.close()
 
 def main() :
 
