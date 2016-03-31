@@ -1,6 +1,7 @@
 import socket
 import os
 import sys
+import hashlib
 
 #high-level config options:
 
@@ -14,16 +15,33 @@ key_file      = os.getcwd() + "\\key"
 #Barebones version--I'll update for multithreading support once I get home tonight
 
 def validate_credentials(username, password):
-  #Stephen's assignment. Search a password file for the submitted username, then validate that
-  #passwords match (hash them). Return True for valid creds and false for invalid
-
-  #temp for testing
-  if(username == "test" and password == "password"):
-    print("[I] Connection validated")
-    return True
-  else:
-    print("[I] Credentials rejected")
+  try:
+    f =  open("shadow", "r")
+  except:
+    print("[E] Unable to open password file.")
     return False
+
+  f_username = "default"
+  while f_username:
+    f_username = f.readline().strip()
+    f_password = f.readline().strip()
+    print(f_username)
+
+    if f_username == username:
+      s = hashlib.sha1()
+      s.update(password.strip())
+      if(s.digest().strip() == f_password.strip()):
+	print("[I] Credentials validated")
+        return True
+  print("[I] Credentials Rejected")        
+  return False
+  #temp for testing
+#  if(username == "test" and password == "password"):
+    #print("[I] Connection validated")
+#    return True
+#  else:
+#    print("[I] Credentials rejected")
+#    return False
 
 def get_and_process_function(session, working_dir):
   function = session.recv(1024)
