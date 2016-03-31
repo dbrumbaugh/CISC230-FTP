@@ -6,7 +6,7 @@ import sys
 #Python client file for CISC230 Project
 
 def establish_connection() :
-  connection = socket.socket()
+  connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
   while True:
     try:
@@ -137,34 +137,81 @@ def cd(connection, arg):
   else:
     print("[E] Exceptional condition in CD command. Ensure that desired directory exists and is properly spelled")
 
+#def get(connection, arg1, arg2):
+#  #receive specified file from server
+#
+#  if arg2 == "":
+#    arg2 = arg1
+#
+#  try:
+#    f = open(arg2, "wb")
+#    connection.send("get " + str(arg1))
+#    sstat = connection.recv(1)
+#
+#    if sstat == "Y":
+#      #all is good, begin recieving file
+#      print("[I] Get request accepted by server")
+#
+#    elif sstat == "E":
+#      print("[E] Requested filename does not exist on server in current working directory")
+#
+#    else:
+#      print("[E] Get request rejected by server.")
+#
+#    f.close()
+#
+#
+#  except:
+#    print("[E] Cannot open local file: " + arg2)
+#
+#  print("function not yet implemented")
+
 def get(connection, arg1, arg2):
   #receive specified file from server
-
   if arg2 == "":
     arg2 = arg1
 
   try:
     f = open(arg2, "wb")
-    connection.send("get " + str(arg1))
-    sstat = connection.recv(1)
-
-    if sstat == "Y":
-      #all is good, begin recieving file
-      print("[I] Get request accepted by server")
-
-    elif sstat == "E":
-      print("[E] Requested filename does not exist on server in current working directory")
-
-    else:
-      print("[E] Get request rejected by server.")
-
-    f.close()
-
+    print("[I] File at " + arg2 +" opened.")
 
   except:
-    print("[E] Cannot open local file: " + arg2)
+    print("[E] Unable to open file " + arg2)
+    return 0
 
-  print("function not yet implemented")
+  connection.send("get " + arg1)
+
+  sstat = connection.recv(1)
+
+  if sstat == "Y":
+    length = str(connection.recv(1024)).strip()
+    data_length = 0
+
+    try:
+      data_length = int(float(length))
+      print("[I] Incoming file of length: " + str(data_length) +" kb")
+      connection.send("Y")
+
+    except:
+      print("[E] Invalid file length recieved: " + str(length))
+      connection.send("N")
+      return 0
+
+    for i in range(int(data_length)):
+      data_segment = connection.recv(1024)
+      print("[I] Recieved segment: " + str(i))
+      print("[I]" + str(data_segment))
+
+      f.write(data_segment)
+      print("[I] Writing segment" + str(i) +" to file")
+
+    f.close()
+    return 0
+
+  else:
+    print("[E] Get request rejected by server.")
+    f.close()
+    return 0
 
 def put(connection, arg1, arg2):
   #send specified file to server
@@ -208,7 +255,6 @@ def put(connection, arg1, arg2):
     while data_segment:
        connection.send(data_segment)
        data_segment = f.read(1024)
-       print("[I]" + str(data_segment))
 
   elif sstat == "E":
     print("[E] Requested filename does not exist on server in current working directory")

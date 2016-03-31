@@ -2,6 +2,7 @@ import socket
 import os
 import sys
 import hashlib
+import math
 
 #high-level config options:
 
@@ -10,6 +11,7 @@ port     = 21
 host_add = socket.gethostname()
 password_file = os.getcwd() + "\\shadow"
 key_file      = os.getcwd() + "\\key"
+buffer_size   = 1024 
 
 #Python server file for CISC230 Project
 #Barebones version--I'll update for multithreading support once I get home tonight
@@ -44,7 +46,7 @@ def validate_credentials(username, password):
 #    return False
 
 def get_and_process_function(session, working_dir):
-  function = session.recv(1024)
+  function = session.recv(buffer_size)
   print("[I] Function request recieved from client: " + function)
 
   args = function.split(" ", 1)
@@ -61,7 +63,7 @@ def get_and_process_function(session, working_dir):
     stat, working_dir = cd(session, arg, working_dir)
     return stat, working_dir
   elif (func == "get"):
-    stat = get(session)
+    stat = get(session, arg, working_dir)
     return stat, working_dir
   elif (func == "put"):
     stat = put(session, arg, working_dir)
@@ -154,7 +156,7 @@ def put(session, arg, working_dir):
       session.send("N")
       return 0
 
-    length = str(session.recv(1024)).strip()
+    length = str(session.recv(buffer_size)).strip()
     data_length = 0
 
     try:
@@ -168,7 +170,7 @@ def put(session, arg, working_dir):
       session.send("N")
 
     for i in range(int(data_length)):
-      data_segment = session.recv(1024)
+      data_segment = session.recv(buffer_size)
       print("[I] Recieved segment: " + str(i))
       print("[I]" + str(data_segment))
       f.write(data_segment)
@@ -176,10 +178,56 @@ def put(session, arg, working_dir):
 
     f.close()
     return 0
+
+def get(session, filename, working_dir):
+#send specified file to server
+
+  get_path = str(working_dir + "\\" + filename)
+
+  try:
+    f = open(get_path, "rb")
+    session.send("Y")
+
+  except:
+    print("[E] Cannot open local file: " + get_path)
+    session.send("N")
+    return 0
+
+  #all is good, begin sending file
+  print("[I] Begin processesing GET request.")
+  length = 0
+  try:
+    length = math.ceil(float(os.path.getsize(get_path))/1024)
+    print("[I] File of length: " + str(length) + " kb")
+    session.send(str(length))
+
+  except:
+    e = sys.exc_info()
+    print(str(e))
+
+  cstat = session.recv(1)
+
+  if(cstat == 'Y'):
+    print("[I] File length accepted by client.")
+
+  else:
+    print("[E] File length rejected by client.")
+    f.close()
+    return 0
+
+  data_segment = f.read(1024)
+
+  while data_segment:
+     session.send(data_segment)
+     data_segment = f.read(1024)
+
+     print("[I]" + str(data_segment))
+
+  f.close()
  
 
 def main():
-  host_socket = socket.socket()
+  host_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   host_socket.bind((host_add, port))
 
   while True:
