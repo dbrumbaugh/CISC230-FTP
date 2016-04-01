@@ -2,52 +2,20 @@ import socket
 import math
 import os
 import sys
-from Crypto.Cipher import AES
 
 #Python client file for CISC230 Project
 
-key_file = os.getcwd() + "\\key"
-
-AES_key =""
-AES_iv  =""
-
-def encrypt(plain_text, key, iv):
-  aes_crypt  = AES.new(key, AES.MODE_CBC, iv)
-  length     = 16 - (len(plain_text) % 16)
-
-  for i in range(length):
-    plain_text += chr(length)
-
-  cipher_text = ""
-
-  for i in range(int(math.ceil(len(plain_text)/16.0))):
-    encoded = aes_crypt.encrypt(plain_text[16*i:16*i+16])
-    cipher_text += encoded
-
-  return cipher_text
-
-def decrypt(cipher_text, key, iv):
-  aes_crypt = AES.new(key, AES.MODE_CBC, iv)
-
-  plain_text = ""
-  for i in range(int(math.ceil(len(cipher_text)/16.0))):
-    plain_part = aes_crypt.decrypt(cipher_text[16*i:16*i+16])
-    plain_text += plain_part
-
-  return plain_text
-
 def establish_connection() :
-  connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  connection = socket.socket()
 
   while True:
     try:
       ip_address = raw_input("Please enter the IP address of the FTP server to which to connect: ")
       port = raw_input("Please enter the port number on which to connect: ")
 
-      if ip_address.strip() == "":
-        connection.connect((socket.gethostname(),21))
-      else:
-	connection.connect((ip_address, port))
+      #test code
+      #connection.connect((ip_address, port))
+      connection.connect((socket.gethostname(),21))
 
       print("[I] Connection to " + ip_address + "successfully established.")
       break
@@ -59,10 +27,10 @@ def establish_connection() :
 def authenticate(connection):
   while True:
     name = raw_input("Please enter username: ")
-    password = raw_input("Please enter password: ")
+    passwd = raw_input("Please enter password: ")
 
-    connection.send(encrypt(name, AES_key, AES_iv))
-    connection.send(encrypt(password, AES_key, AES_iv))
+    connection.send(name)
+    connection.send(passwd)
 
     authenticated = connection.recv(1)
 
@@ -171,50 +139,32 @@ def cd(connection, arg):
 
 def get(connection, arg1, arg2):
   #receive specified file from server
+
   if arg2 == "":
     arg2 = arg1
 
   try:
     f = open(arg2, "wb")
-    print("[I] File at " + arg2 +" opened.")
+    connection.send("get " + str(arg1))
+    sstat = connection.recv(1)
+
+    if sstat == "Y":
+      #all is good, begin recieving file
+      print("[I] Get request accepted by server")
+
+    elif sstat == "E":
+      print("[E] Requested filename does not exist on server in current working directory")
+
+    else:
+      print("[E] Get request rejected by server.")
+
+    f.close()
+
 
   except:
-    print("[E] Unable to open file " + arg2)
-    return 0
+    print("[E] Cannot open local file: " + arg2)
 
-  connection.send("get " + arg1)
-
-  sstat = connection.recv(1)
-
-  if sstat == "Y":
-    length = str(connection.recv(1024)).strip()
-    data_length = 0
-
-    try:
-      data_length = int(float(length))
-      print("[I] Incoming file of length: " + str(data_length) +" kb")
-      connection.send("Y")
-
-    except:
-      print("[E] Invalid file length recieved: " + str(length))
-      connection.send("N")
-      return 0
-
-    for i in range(int(data_length)):
-      data_segment = connection.recv(1024)
-      print("[I] Recieved segment: " + str(i))
-      print("[I]" + str(data_segment))
-
-      f.write(data_segment)
-      print("[I] Writing segment" + str(i) +" to file")
-
-    f.close()
-    return 0
-
-  else:
-    print("[E] Get request rejected by server.")
-    f.close()
-    return 0
+  print("function not yet implemented")
 
 def put(connection, arg1, arg2):
   #send specified file to server
@@ -258,6 +208,7 @@ def put(connection, arg1, arg2):
     while data_segment:
        connection.send(data_segment)
        data_segment = f.read(1024)
+       print("[I]" + str(data_segment))
 
   elif sstat == "E":
     print("[E] Requested filename does not exist on server in current working directory")
@@ -268,14 +219,7 @@ def put(connection, arg1, arg2):
   f.close()
 
 def main() :
-  global AES_key
-  global AES_iv
-  try:
-    f = open(key_file, "rb")
-    AES_key = f.read(32)
-    AES_iv  = f.read(16)
-  except:
-    print("[E] Unable to access keyfile at: " + key_file)
+
   
   connection = establish_connection()
   authenticate(connection)

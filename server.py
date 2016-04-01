@@ -3,6 +3,7 @@ import os
 import sys
 import hashlib
 import math
+from Crypto.Cipher import AES
 
 #high-level config options:
 
@@ -13,10 +14,51 @@ password_file = os.getcwd() + "\\shadow"
 key_file      = os.getcwd() + "\\key"
 buffer_size   = 1024 
 
+AES_key =""
+AES_iv  =""
+
+def encrypt(plain_text, key, iv):
+  aes_crypt  = AES.new(key, AES.MODE_CBC, iv)
+  length     = 16 - (len(plain_text) % 16)
+  for i in range(length):
+    plain_text += chr(length)
+
+  cipher_text = ""
+
+  for i in range(int(math.ceil(len(plain_text)/16.0))):
+    print(str(len(plain_text[16*i:16*i+16])))
+    encoded = aes_crypt.encrypt(plain_text[16*i:16*i+16])
+    cipher_text += encoded
+
+  return cipher_text
+
+def decrypt(cipher_text, key, iv):
+  aes_crypt = AES.new(key, AES.MODE_CBC, iv)
+
+  plain_text = ""
+  for i in range(int(math.ceil(len(cipher_text)/16.0))):
+    plain_part = aes_crypt.decrypt(cipher_text[16*i:16*i+16])
+    plain_text += plain_part
+
+  if ord(str(plain_text[-1])) < 16:
+      text_list = list(plain_text)
+      padding = plain_text[-1]
+      while str(text_list[-1]) == str(padding):
+        del text_list[-1]
+      plain_text = "".join(text_list)
+	  
+  return plain_text
+
 #Python server file for CISC230 Project
 #Barebones version--I'll update for multithreading support once I get home tonight
 
 def validate_credentials(username, password):
+  username = decrypt(username, AES_key, AES_iv)
+  password = decrypt(password, AES_key, AES_iv)
+
+  print(username)
+  print(password)
+
   try:
     f =  open("shadow", "r")
   except:
@@ -172,7 +214,7 @@ def put(session, arg, working_dir):
     for i in range(int(data_length)):
       data_segment = session.recv(buffer_size)
       print("[I] Recieved segment: " + str(i))
-      print("[I]" + str(data_segment))
+      #print("[I]" + str(data_segment))
       f.write(data_segment)
       print("[I] Writing segment" + str(i) +" to file")
 
@@ -227,8 +269,20 @@ def get(session, filename, working_dir):
  
 
 def main():
+  global AES_key
+  global AES_iv
+
+  try:
+    f = open(key_file)
+    AES_key = f.read(32)
+    AES_iv  = f.read(16)
+  except:
+    print("[E] Unable to access key file: " + key_file)
+
   host_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   host_socket.bind((host_add, port))
+
+  print("[I] Server socket opened and awaiting connection.")
 
   while True:
     host_socket.listen(1)
